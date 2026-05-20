@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — 看板{% endblock %}
+{% block nav %}
+<span class="nav-title">{{ project.name }}</span>
+{% endblock %}
+{% block content %}
+<div class="board-page">
+    <div class="board-tabs">
+        {% for board in boards %}
+        <button class="tab-btn {% if loop.first %}active{% endif %}" data-board-id="{{ board.id }}">{{ board.name }}</button>
+        {% endfor %}
+        <button class="tab-btn add-board-btn" id="addBoardBtn">+</button>
+    </div>
+
+    <div class="filter-bar" id="filterBar">
+        <input type="text" id="searchInput" placeholder="搜索卡片标题..." />
+        <select id="priorityFilter">
+            <option value="">所有优先级</option>
+            <option value="low">低</option>
+            <option value="medium">中</option>
+            <option value="high">高</option>
+            <option value="urgent">紧急</option>
+        </select>
+        <input type="text" id="assigneeFilter" placeholder="负责人..." />
+        <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">清除筛选</button>
+    </div>
+
+    <div id="boardContainer" class="board-container">
+        <div id="columnsArea" class="columns-area"></div>
+        <button id="addColumnBtn" class="add-column-btn">+ 添加列</button>
+    </div>
+</div>
+
+<!-- 卡片详情弹窗 -->
+<div id="cardModal" class="modal hidden">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <input type="text" id="cardTitle" class="card-title-input" />
+            <button class="close-btn" onclick="closeCardModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="card-fields">
+                <label>优先级
+                    <select id="cardPriority">
+                        <option value="low">低</option>
+                        <option value="medium">中</option>
+                        <option value="high">高</option>
+                        <option value="urgent">紧急</option>
+                    </select>
+                </label>
+                <label>负责人 <input type="text" id="cardAssignee" /></label>
+                <label>截止日期 <input type="date" id="cardDueDate" /></label>
+                <label>颜色
+                    <input type="color" id="cardColor" value="#3498db" />
+                </label>
+            </div>
+            <label>描述
+                <textarea id="cardDescription" rows="4"></textarea>
+            </label>
+            <div id="commentsSection">
+                <h3>评论</h3>
+                <div id="commentsList"></div>
+                <div class="comment-input">
+                    <input type="text" id="commentAuthor" placeholder="你的名字" />
+                    <textarea id="commentContent" placeholder="写评论..." rows="2"></textarea>
+                    <button id="addCommentBtn" class="btn btn-primary btn-sm">发送</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button id="saveCardBtn" class="btn btn-primary">保存</button>
+            <button id="deleteCardBtn" class="btn btn-danger">删除</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/board.js"></script>
+{% endblock %}

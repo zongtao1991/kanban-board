@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}项目列表{% endblock %}
+{% block content %}
+<div class="project-page">
+    <div class="project-header">
+        <h1>我的项目</h1>
+        <button id="createProjectBtn" class="btn btn-primary">+ 新建项目</button>
+    </div>
+    <div id="projectList" class="project-grid">
+        {% for project in projects %}
+        <div class="project-card" data-project-id="{{ project.id }}">
+            <div class="project-actions">
+                <button class="btn-icon edit-project-btn" title="编辑项目">✏️</button>
+                <button class="btn-icon delete-project-btn" title="删除项目">🗑️</button>
+            </div>
+            <a href="/project/{{ project.id }}" style="display: block; height: 100%;">
+                <h3>{{ project.name }}</h3>
+                <p>{{ project.description or '暂无描述' }}</p>
+                <span class="meta">{{ project.boards.count() }} 个看板</span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="projectModal" class="modal hidden">
+    <div class="modal-content">
+        <h2 id="projectModalTitle">新建项目</h2>
+        <input type="text" id="projectName" placeholder="项目名称" />
+        <textarea id="projectDesc" placeholder="项目描述"></textarea>
+        <input type="hidden" id="editProjectId" />
+        <div class="modal-actions">
+            <button id="saveProjectBtn" class="btn btn-primary">保存</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('projectModal').classList.add('hidden')">取消</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("createProjectBtn").onclick = () => {
+    document.getElementById("projectModalTitle").textContent = "新建项目";
+    document.getElementById("projectName").value = "";
+    document.getElementById("projectDesc").value = "";
+    document.getElementById("editProjectId").value = "";
+    document.getElementById("projectModal").classList.remove("hidden");
+};
+
+document.getElementById("saveProjectBtn").onclick = async () => {
+    const name = document.getElementById("projectName").value.trim();
+    if (!name) return;
+    
+    const editProjectId = document.getElementById("editProjectId").value;
+    const description = document.getElementById("projectDesc").value;
+    
+    if (editProjectId) {
+        await fetch(`/api/projects/${editProjectId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name, description}),
+        });
+    } else {
+        await fetch("/api/projects", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name, description}),
+        });
+    }
+    location.reload();
+};
+
+document.querySelectorAll(".edit-project-btn").forEach(btn => {
+    btn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const projectCard = btn.closest(".project-card");
+        const projectId = projectCard.dataset.projectId;
+        
+        const response = await fetch(`/api/projects`);
+        const projects = await response.json();
+        const project = projects.find(p => p.id == projectId);
+        
+        if (project) {
+            document.getElementById("projectModalTitle").textContent = "编辑项目";
+            document.getElementById("projectName").value = project.name;
+            document.getElementById("projectDesc").value = project.description;
+            document.getElementById("editProjectId").value = project.id;
+            document.getElementById("projectModal").classList.remove("hidden");
+        }
+    };
+});
+
+document.querySelectorAll(".delete-project-btn").forEach(btn => {
+    btn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!confirm("确定要删除此项目吗？所有看板、列和卡片都将被删除。")) return;
+        
+        const projectCard = btn.closest(".project-card");
+        const projectId = projectCard.dataset.projectId;
+        
+        await fetch(`/api/projects/${projectId}`, {
+            method: "DELETE"
+        });
+        location.reload();
+    };
+});
+</script>
+{% endblock %}
